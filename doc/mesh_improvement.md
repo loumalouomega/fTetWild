@@ -26,7 +26,11 @@ where J is the Jacobian of the affine map from a regular reference tetrahedron t
 - Scale-invariant: same quality for any scaling of T
 - Differentiable: enables gradient-based vertex smoothing
 
-**Numerical instability fix**: When AMIPS(T) > 10⁸, standard floating-point evaluation is non-deterministic (different vertex permutations give wildly different values — up to 4 orders of magnitude difference). The implementation detects this via `is_energy_unstable()` and falls back to rational arithmetic for the intermediate cubed-energy computation, then takes the cubic root. This prevents unnecessary over-refinement.
+**Numerical instability fix**: When AMIPS(T) > 10⁸, standard floating-point evaluation is non-deterministic (different vertex permutations give wildly different values — up to 4 orders of magnitude difference). The implementation detects this via `is_energy_unstable()` and falls back to higher-precision arithmetic for the intermediate cubed-energy computation, then takes the cubic root. This prevents unnecessary over-refinement.
+
+Two backends are available for the fallback, selected at compile time via `FLOAT_TETWILD_USE_GMP`:
+- **Default (OFF)**: `long double` (80-bit extended precision on x86/x86_64). No extra dependency.
+- **GMP (ON)**: `triwild::Rational` backed by GMP arbitrary-precision rationals. Exact on all platforms, requires `libgmp-dev`.
 
 ---
 
