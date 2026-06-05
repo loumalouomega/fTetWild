@@ -1,12 +1,24 @@
 # Dependencies
 
-## System dependency (must be installed manually)
+## System dependencies
 
-| Library | Role | Install |
+GMP is **optional** since the introduction of the `long double` fallback. No system packages are required by default.
+
+| Library | Role | Required | Install |
+|---|---|---|---|
+| **GMP** | Exact rational arithmetic for AMIPS energy stabilisation | **Optional** (`-DFLOAT_TETWILD_USE_GMP=ON`) | `sudo apt-get install libgmp-dev` / `brew install gmp` |
+
+### GMP vs. long double fallback
+
+| | GMP (`FLOAT_TETWILD_USE_GMP=ON`) | Default (long double) |
 |---|---|---|
-| **GMP** | Exact arithmetic for AMIPS energy stabilisation and geometric predicates | `sudo apt-get install libgmp-dev` / `brew install gmp` |
+| AMIPS precision | Exact rational (arbitrary precision) | 80-bit extended precision (x86/x86_64) |
+| ARM / Apple Silicon | Exact | Same precision as double — instability may reappear on very degenerate elements |
+| License | LGPL v3 | — |
+| System install required | Yes | No |
 
-CMake hard-fails with `Cannot find GMP` if absent. Override detected paths with the `GMP_INC` / `GMP_LIB` environment variables, or the `--gmp-inc` / `--gmp-lib` flags in `build/configure.sh`.
+Enable GMP via `configure.sh --with-gmp` or by passing `-DFLOAT_TETWILD_USE_GMP=ON` to CMake directly.
+When GMP is enabled, override detected paths with the `GMP_INC` / `GMP_LIB` environment variables, or the `--gmp-inc` / `--gmp-lib` flags in `build/configure.sh`.
 
 ---
 

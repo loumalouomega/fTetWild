@@ -38,13 +38,15 @@ operates entirely in floating-point arithmetic.
 ## Quick build reference
 
 ```bash
-# Install system dependency (Ubuntu/Debian)
-sudo apt-get install libgmp-dev
+# No system packages required by default — all deps are fetched automatically.
 
 # Configure and build
 cd build
-bash configure.sh          # Release + TBB, all defaults
+bash configure.sh          # Release + TBB, long double fallback (no GMP needed)
 cmake --build . --parallel $(nproc)
+
+# Optional: enable exact GMP rational arithmetic (requires libgmp-dev)
+bash configure.sh --with-gmp
 
 # Run tests
 ctest --output-on-failure
