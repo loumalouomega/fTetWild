@@ -39,6 +39,9 @@ ${BOLD}fTetWild feature flags:${RESET}
   --use-float               Use float instead of double  [default: OFF]
   --exact-envelope          Enable FastEnvelope library  [default: OFF]
   --with-tetgen             Enable TetGen via libigl     [default: OFF]
+  --with-gmp                Use GMP for exact rational AMIPS energy
+                            stabilisation. Requires libgmp-dev.
+                            Default: OFF (long double fallback is used)
 
 ${BOLD}Sanitizers (implies --build-type=RelWithDebInfo unless set):${RESET}
   --sanitize-address        Enable AddressSanitizer   (ASan)
@@ -68,6 +71,7 @@ ${BOLD}Examples:${RESET}
   bash configure.sh --build-type Debug --sanitize-address
   bash configure.sh --build-type RelWithDebInfo --sanitize-undefined --cxx clang++
   bash configure.sh --exact-envelope --no-tbb
+  bash configure.sh --with-gmp                   # enable exact GMP rational arithmetic
   bash configure.sh --offline -- -DCMAKE_VERBOSE_MAKEFILE=ON
 EOF
 }
@@ -88,6 +92,7 @@ ENABLE_TBB=ON
 USE_FLOAT=OFF
 EXACT_ENVELOPE=OFF
 WITH_TETGEN=OFF
+USE_GMP=OFF
 
 WITH_SANITIZERS=OFF
 SANITIZE_ADDRESS=OFF
@@ -133,6 +138,7 @@ while [[ $# -gt 0 ]]; do
         --use-float)         USE_FLOAT=ON;           shift   ;;
         --exact-envelope)    EXACT_ENVELOPE=ON;      shift   ;;
         --with-tetgen)       WITH_TETGEN=ON;         shift   ;;
+        --with-gmp)          USE_GMP=ON;             shift   ;;
 
         --sanitize-address)  SANITIZE_ADDRESS=ON;   WITH_SANITIZERS=ON; shift ;;
         --sanitize-memory)   SANITIZE_MEMORY=ON;    WITH_SANITIZERS=ON; shift ;;
@@ -220,6 +226,7 @@ CMAKE_ARGS=(
     -DFLOAT_TETWILD_USE_FLOAT="${USE_FLOAT}"
     -DFLOAT_TETWILD_WITH_EXACT_ENVELOPE="${EXACT_ENVELOPE}"
     -DFLOAT_TETWILD_WITH_SANITIZERS="${WITH_SANITIZERS}"
+    -DFLOAT_TETWILD_USE_GMP="${USE_GMP}"
 
     # Sanitizers
     -DSANITIZE_ADDRESS="${SANITIZE_ADDRESS}"
@@ -262,6 +269,7 @@ printf "  %-28s %s\n" "TBB parallelism:"   "${ENABLE_TBB}"
 printf "  %-28s %s\n" "Scalar type:"       "$( [[ $USE_FLOAT == ON ]] && echo float || echo double )"
 printf "  %-28s %s\n" "Exact envelope:"    "${EXACT_ENVELOPE}"
 printf "  %-28s %s\n" "TetGen:"            "${WITH_TETGEN}"
+printf "  %-28s %s\n" "GMP rational:"      "$( [[ $USE_GMP == ON ]] && echo "ON (exact)" || echo "OFF (long double fallback)" )"
 printf "  %-28s %s\n" "Build tests:"       "${BUILD_TESTING}"
 printf "  %-28s %s\n" "compile_commands:"  "${EXPORT_COMPILE_COMMANDS}"
 printf "  %-28s %s\n" "Verbose build:"     "${VERBOSE}"
