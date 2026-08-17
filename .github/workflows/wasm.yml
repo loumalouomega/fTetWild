@@ -19,13 +19,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup CMake
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          # ubuntu-latest's default CMake (3.31+) hard-errors on the
-          # FetchContent_Populate() pattern used by libigl's Eigen recipe
-          # (CMP0169). continuous.yml sidesteps this the same way, by pinning
-          # to a CMake version that still allows it.
-          cmake-version: "3.29.6"
+        # ubuntu-latest's default CMake (3.31+) hard-errors on the
+        # FetchContent_Populate() pattern used by libigl's Eigen recipe
+        # (CMP0169). continuous.yml sidesteps this the same way, by pinning
+        # to a CMake version that still allows it.
+        run: |
+          pip install "cmake==3.29.6"
+          cmake --version
 
       - name: Setup Emscripten
         uses: mymindstorm/setup-emsdk@v14
