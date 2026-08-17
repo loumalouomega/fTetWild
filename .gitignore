@@ -12,3 +12,7 @@ matlab/*.stl
 __pycache__
 .DS_Store
 /data
+node_modules/
+doc/.vitepress/cache/
+doc/.vitepress/dist/
+npm/dist/

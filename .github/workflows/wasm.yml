@@ -1,0 +1,88 @@
+name: WASM
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - "v*.*.*"
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-wasm:
+    name: Build (serial + threaded)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+
+      - name: Configure + build serial (single-threaded) module
+        run: |
+          emcmake cmake -B build-wasm-serial -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-wasm-serial --target FloatTetwild_wasm --parallel
+
+      - name: Configure + build threaded (pthreads) module
+        run: |
+          emcmake cmake -B build-wasm-threaded -DCMAKE_BUILD_TYPE=Release -DFLOAT_TETWILD_WASM_THREADS=ON
+          cmake --build build-wasm-threaded --target FloatTetwild_wasm --parallel
+
+      - name: Assemble npm/dist
+        run: |
+          mkdir -p npm/dist
+          cp build-wasm-serial/floattetwild.serial.mjs npm/dist/
+          cp build-wasm-serial/floattetwild.serial.wasm npm/dist/
+          cp build-wasm-threaded/floattetwild.threaded.mjs npm/dist/
+          cp build-wasm-threaded/floattetwild.threaded.wasm npm/dist/
+          # oneTBB builds as a dynamic wasm side-module under Emscripten; it
+          # must ship alongside the threaded build's main module.
+          find build-wasm-threaded -name "libtbb.so*" -exec cp {} npm/dist/ \;
+          ls -la npm/dist
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Smoke test
+        run: node npm/test/smoke.mjs
+
+      - name: Upload npm package artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: |
+            npm/package.json
+            npm/index.js
+            npm/README.md
+            npm/dist/**
+
+  publish-npm:
+    name: Publish to npm
+    needs: build-wasm
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download npm package artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+          path: npm
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish
+        working-directory: npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

@@ -31,6 +31,12 @@ void Logger::init(bool use_cout, const spdlog::filename_t& filename, bool trunca
         sinks.emplace_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(filename, truncate));
     }
 
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+    // The async logger spins up its own std::thread pool, which always fails
+    // to construct under Emscripten without -pthread ("thread constructor
+    // failed"). Fall back to a plain synchronous logger in that case.
+    logger_ = std::make_shared<spdlog::logger>("float-tetwild", sinks.begin(), sinks.end());
+#else
     spdlog::init_thread_pool(8192, 1);
 
     logger_ = std::make_shared<spdlog::async_logger>("float-tetwild",
@@ -38,6 +44,7 @@ void Logger::init(bool use_cout, const spdlog::filename_t& filename, bool trunca
                                                      sinks.end(),
                                                      spdlog::thread_pool(),
                                                      spdlog::async_overflow_policy::block);
+#endif
 
     spdlog::drop("float-tetwild");
     spdlog::register_logger(logger_);

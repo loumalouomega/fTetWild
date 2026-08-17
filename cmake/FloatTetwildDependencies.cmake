@@ -12,6 +12,16 @@ include(FetchContent)
 set(FETCHCONTENT_QUIET ON)
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
+if(EMSCRIPTEN AND NOT FLOAT_TETWILD_ENABLE_TBB)
+    # Several libigl algorithms (fast_winding_number, triangle_triangle_adjacency,
+    # bfs_orient, ...) call igl::parallel_for, which spawns real std::thread
+    # workers regardless of fTetWild's own TBB setting. Without -pthread,
+    # std::thread construction always fails under Emscripten ("thread
+    # constructor failed"), so the serial (non-pthread) wasm build forces
+    # every igl::parallel_for call to run as a plain sequential loop instead.
+    add_compile_definitions(IGL_PARALLEL_FOR_FORCE_SERIAL)
+endif()
+
 # ##############################################################################
 # Required libraries
 # ##############################################################################
@@ -45,6 +55,12 @@ if(NOT TARGET fmt::fmt)
         GIT_REPOSITORY https://github.com/fmtlib/fmt
         GIT_TAG        11.2.0
     )
+    if(EMSCRIPTEN)
+        # os.cc wraps POSIX file-descriptor APIs fTetWild doesn't use, and it
+        # fails to compile under Emscripten's libc++ (missing malloc/free
+        # declarations transitively pulled in on native toolchains).
+        set(FMT_OS OFF CACHE BOOL "" FORCE)
+    endif()
     FetchContent_MakeAvailable(fmt)
 endif()
 
@@ -89,6 +105,22 @@ if(NOT TARGET geogram::geogram)
     # Set the platform to force a static build
     if(MSVC)
         set(GEO_PLATFORM "Win-vs-generic")
+    elseif(EMSCRIPTEN)
+        # Uses Geogram's own Emscripten-clang platform config instead of the
+        # GCC one: the GCC platform config unconditionally adds -fopenmp,
+        # which breaks linking of Geogram's vendored PoissonRecon (uses
+        # "#pragma omp critical") under wasm-ld ("common symbols are not yet
+        # implemented for Wasm").
+        set(GEO_PLATFORM "Emscripten-clang")
+
+        # Geogram's Emscripten-clang.cmake looks for emcc.py to locate the
+        # Emscripten toolchain's own cmake/Modules; modern emsdk no longer
+        # ships that file, so find_path() fails (EMSCRIPTEN_DIR-NOTFOUND).
+        # emcmake's toolchain file already defines EMSCRIPTEN_ROOT_PATH, so
+        # reuse it directly and skip the search.
+        if(NOT DEFINED CACHE{EMSCRIPTEN_DIR})
+            set(EMSCRIPTEN_DIR "${EMSCRIPTEN_ROOT_PATH}" CACHE PATH "" FORCE)
+        endif()
     elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         set(GEO_PLATFORM "Darwin-clang")
     else()
@@ -130,6 +162,15 @@ if(FLOAT_TETWILD_ENABLE_TBB AND NOT TARGET TBB::tbb)
     set(TBB_BUILD_TBBMALLOC_PROXY OFF CACHE BOOL "" FORCE)
     set(TBB_TEST OFF CACHE BOOL "" FORCE)
     set(TBB_NO_DATE ON CACHE BOOL "" FORCE)
+
+    if(EMSCRIPTEN)
+        # Emscripten reports CMAKE_SYSTEM_PROCESSOR as "x86" by default, which
+        # makes oneTBB add x86-specific flags (-mrtm, -mwaitpkg) that don't
+        # apply to wasm. Same workaround Geogram applies for its own vendored
+        # TBB fetch in cmake/onetbb.cmake. (-pthread itself is already applied
+        # globally in the root CMakeLists.txt, before any FetchContent runs.)
+        set(CMAKE_SYSTEM_PROCESSOR "WASM")
+    endif()
 
     FetchContent_MakeAvailable(tbb)
 endif()

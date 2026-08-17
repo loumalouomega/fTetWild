@@ -27,10 +27,9 @@
 #include <igl/writeOFF.h>
 #include <igl/writeSTL.h>
 
+#ifdef FLOAT_TETWILD_USE_TBB
 #include <oneapi/tbb.h>
 #include <oneapi/tbb/parallel_for.h>
-
-#ifdef FLOAT_TETWILD_USE_TBB
 // #include <floattetwild/FloatTetCuttingParallel.h>
 #endif
 

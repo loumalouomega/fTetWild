@@ -48,6 +48,24 @@ option(FLOAT_TETWILD_USE_FLOAT "Use floats instead of double" OFF)
 option(FLOAT_TETWILD_WITH_SANITIZERS "Use sanitizers" OFF)
 option(FLOAT_TETWILD_WITH_EXACT_ENVELOPE "Use exact envelope" OFF)
 option(FLOAT_TETWILD_USE_GMP "Use GMP for exact rational arithmetic (AMIPS energy stabilisation). When OFF a long double fallback is used." OFF)
+option(FLOAT_TETWILD_WASM_THREADS "When building for Emscripten, use pthreads + TBB (requires cross-origin isolation in the browser). When OFF, builds a single-threaded module that runs everywhere." OFF)
+
+# Emscripten/WebAssembly builds: GMP isn't portable to wasm, and TBB is only
+# usable when the pthreads variant is requested (it needs -pthread and, in
+# the browser, SharedArrayBuffer/cross-origin isolation).
+if(EMSCRIPTEN)
+    set(FLOAT_TETWILD_USE_GMP OFF CACHE BOOL "" FORCE)
+    set(FLOAT_TETWILD_ENABLE_TBB ${FLOAT_TETWILD_WASM_THREADS} CACHE BOOL "" FORCE)
+
+    if(FLOAT_TETWILD_WASM_THREADS)
+        # Must be applied globally, before any dependency is fetched/compiled:
+        # wasm-ld requires every object in the link to agree on the atomics/
+        # bulk-memory target features, so Geogram, TBB, libigl, etc. all need
+        # -pthread too, not just fTetWild's own sources.
+        add_compile_options(-pthread)
+        add_link_options(-pthread)
+    endif()
+endif()
 
 # Sanitizer options
 option(SANITIZE_ADDRESS "Sanitize Address" OFF)
@@ -156,7 +174,7 @@ endif()
 # ##############################################################################
 
 # Main executable
-if(FLOAT_TETWILD_TOPLEVEL_PROJECT)
+if(FLOAT_TETWILD_TOPLEVEL_PROJECT AND NOT EMSCRIPTEN)
     add_executable(${PROJECT_NAME}_bin src/main.cpp)
     target_compile_features(${PROJECT_NAME}_bin PUBLIC cxx_std_14)
 
@@ -175,6 +193,42 @@ if(FLOAT_TETWILD_TOPLEVEL_PROJECT)
     if(NOT (${CMAKE_VERSION} VERSION_LESS "3.6.0"))
         set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
                  PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME}_bin)
+    endif()
+endif()
+
+# ##############################################################################
+# FloatTetwild WebAssembly module (Embind)
+# ##############################################################################
+
+if(FLOAT_TETWILD_TOPLEVEL_PROJECT AND EMSCRIPTEN)
+    add_executable(${PROJECT_NAME}_wasm src/wasm/Bindings.cpp)
+    target_compile_features(${PROJECT_NAME}_wasm PUBLIC cxx_std_14)
+    target_link_libraries(${PROJECT_NAME}_wasm PUBLIC ${PROJECT_NAME} warnings::all)
+
+    if(FLOAT_TETWILD_WASM_THREADS)
+        set(FTETWILD_WASM_OUTPUT_NAME "floattetwild.threaded")
+    else()
+        set(FTETWILD_WASM_OUTPUT_NAME "floattetwild.serial")
+    endif()
+
+    set_target_properties(${PROJECT_NAME}_wasm PROPERTIES
+        OUTPUT_NAME ${FTETWILD_WASM_OUTPUT_NAME}
+        SUFFIX ".mjs"
+    )
+
+    target_link_options(${PROJECT_NAME}_wasm PRIVATE
+        --bind
+        -sMODULARIZE=1
+        -sEXPORT_ES6=1
+        -sEXPORT_NAME=createFloatTetwildModule
+        -sALLOW_MEMORY_GROWTH=1
+        -sENVIRONMENT=web,worker,node
+    )
+
+    if(FLOAT_TETWILD_WASM_THREADS)
+        # -pthread itself is applied globally (see the FLOAT_TETWILD_WASM_THREADS
+        # handling near the top of this file); only the pool size is target-specific.
+        target_link_options(${PROJECT_NAME}_wasm PRIVATE -sPTHREAD_POOL_SIZE=4)
     endif()
 endif()
 

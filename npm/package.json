@@ -1,0 +1,30 @@
+{
+  "name": "float-tetwild-wasm",
+  "version": "0.1.0",
+  "description": "WebAssembly build of fTetWild (Fast Tetrahedral Meshing in the Wild) for Node.js and the browser",
+  "license": "MPL-2.0",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "dist/"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loumalouomega/fTetWild.git"
+  },
+  "keywords": [
+    "tetrahedral",
+    "mesh",
+    "meshing",
+    "wasm",
+    "webassembly",
+    "geometry-processing"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

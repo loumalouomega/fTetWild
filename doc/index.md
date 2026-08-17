@@ -6,7 +6,7 @@ operates entirely in floating-point arithmetic.
 
 **Paper**: Yixin Hu, Teseo Schneider, Bolun Wang, Denis Zorin, Daniele Panozzo.
 *Fast Tetrahedral Meshing in the Wild*. ACM Transactions on Graphics (SIGGRAPH 2020).
-[`doc/paper.pdf`](paper.pdf)
+[`doc/public/paper.pdf`](/paper.pdf)
 
 ---
 
