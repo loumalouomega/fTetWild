@@ -223,6 +223,11 @@ if(FLOAT_TETWILD_TOPLEVEL_PROJECT AND EMSCRIPTEN)
         -sEXPORT_NAME=createFloatTetwildModule
         -sALLOW_MEMORY_GROWTH=1
         -sENVIRONMENT=web,worker,node
+        # Needed for npm/index.js's typed-array fast path: it writes vertex/face
+        # data directly into these heap views (HEAPF64.set()/HEAP32.set()) rather
+        # than marshaling through an embind vector one element at a time. Not
+        # exported by default.
+        -sEXPORTED_RUNTIME_METHODS=HEAPF64,HEAPF32,HEAP32,HEAPU32
     )
 
     if(FLOAT_TETWILD_WASM_THREADS)

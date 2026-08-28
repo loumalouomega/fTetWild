@@ -69,6 +69,7 @@ jobs:
           path: |
             npm/package.json
             npm/index.js
+            npm/index.d.ts
             npm/README.md
             npm/dist/**
 

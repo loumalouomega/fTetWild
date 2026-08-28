@@ -445,7 +445,8 @@ void floatTetWild::insert_triangles_aux(const std::vector<Vector3>&  input_verti
                         old_is_face_inserted,
                         b_edge_infos,
                         is_on_cut_edges,
-                        b_edges1);
+                        b_edges1,
+                        mesh.params.is_quiet);
     logger().info("find_boundary_edges done");
     std::vector<std::array<int, 3>> known_surface_fs;
     std::vector<std::array<int, 3>> known_not_surface_fs;
@@ -1944,7 +1945,8 @@ void floatTetWild::find_boundary_edges(
   const std::vector<bool>&                                      old_is_face_inserted,
   std::vector<std::pair<std::array<int, 2>, std::vector<int>>>& b_edge_infos,
   std::vector<bool>&                                            is_on_cut_edges,
-  std::vector<std::array<int, 2>>&                              b_edges)
+  std::vector<std::array<int, 2>>&                              b_edges,
+  bool                                                           is_quiet)
 {
     std::vector<std::array<int, 2>> edges;
     std::vector<std::vector<int>>   conn_tris(input_vertices.size());
@@ -2074,8 +2076,10 @@ void floatTetWild::find_boundary_edges(
         }
     }
 
-    cout << "#boundary_e1 = " << cnt1 << endl;
-    cout << "#boundary_e2 = " << cnt2 << endl;
+    if (!is_quiet) {
+        cout << "#boundary_e1 = " << cnt1 << endl;
+        cout << "#boundary_e2 = " << cnt2 << endl;
+    }
 }
 // double time_e1 = 0;
 // double time_e2 = 0;
@@ -3106,8 +3110,10 @@ void floatTetWild::mark_surface_fs(const std::vector<Vector3>&                  
         }
     }
 
-    cout << "known_surface_fs.size = " << known_surface_fs.size() << endl;
-    cout << "known_not_surface_fs.size = " << known_not_surface_fs.size() << endl;
+    if (!mesh.params.is_quiet) {
+        cout << "known_surface_fs.size = " << known_surface_fs.size() << endl;
+        cout << "known_not_surface_fs.size = " << known_not_surface_fs.size() << endl;
+    }
     if (known_surface_fs.empty() && known_not_surface_fs.empty())
         return;
 

@@ -27,7 +27,7 @@ void floatTetWild::AABBWrapper::init_b_mesh_and_tree(const std::vector<Vector3>&
     std::vector<bool> _1;
     find_boundary_edges(input_vertices, input_faces,
                         std::vector<bool>(input_faces.size(), true), std::vector<bool>(input_faces.size(), true),
-                        _, _1, b_edges);
+                        _, _1, b_edges, mesh.params.is_quiet);
 
     if (b_edges.empty()) {
         b_mesh.vertices.clear();

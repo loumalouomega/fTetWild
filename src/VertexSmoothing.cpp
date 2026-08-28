@@ -162,7 +162,8 @@ void floatTetWild::vertex_smoothing(Mesh& mesh, const AABBWrapper& tree)
         smooth_one(v_id);
 #endif
 
-    cout << "success = " << suc_counter << "(" << counter << ")" << endl;
+    if (!mesh.params.is_quiet)
+        cout << "success = " << suc_counter << "(" << counter << ")" << endl;
 }
 
 bool floatTetWild::project_and_check(Mesh&                mesh,

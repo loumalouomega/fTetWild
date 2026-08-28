@@ -580,5 +580,11 @@ void MeshIO::extract_volume_mesh(const Mesh&      mesh,
         const auto skip_vertex = [&mesh](const int i) { return mesh.tet_vertices[i].is_removed; };
         floatTetWild::extract_volume_mesh(mesh, skip_tet, skip_vertex, V, T);
     }
+
+    // fTetWild's internal winding is orient_3d(v0, v1, v2, v3) == ORI_POSITIVE, which is a
+    // NEGATIVE signed volume det(v1 - v0, v2 - v0, v3 - v0). Emit the standard positive-volume
+    // convention (MSH tet4 / VTK_TETRA / gmsh) instead, which is the same reorder the .msh and
+    // .mesh writers already apply. The in-memory Mesh keeps the internal convention.
+    T.col(2).swap(T.col(3));
 }
 }  // namespace floatTetWild

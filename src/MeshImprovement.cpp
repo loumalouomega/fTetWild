@@ -33,7 +33,8 @@
 //#define USE_FWN true
 
 void floatTetWild::init(Mesh &mesh, AABBWrapper& tree) {
-    cout << "initializing..." << endl;
+    if (!mesh.params.is_quiet)
+        cout << "initializing..." << endl;
 //    for (auto &t: mesh.tets) {
 //        if (t.is_removed)
 //            continue;
@@ -165,12 +166,14 @@ void floatTetWild::optimization(const std::vector<Vector3> &input_vertices, cons
 
         if (mesh.params.stop_p > 0) {
             int p = get_max_p(mesh);
-            cout << "p = " << p << endl;
+            if (!mesh.params.is_quiet)
+                cout << "p = " << p << endl;
             if (p <= mesh.params.stop_p && mesh.is_input_all_inserted)
                 break;
         }
 
-        cout << "//////////////// pass " << it << " ////////////////" << endl;
+        if (!mesh.params.is_quiet)
+            cout << "//////////////// pass " << it << " ////////////////" << endl;
         std::array<int, 5> it_ops;
         if (it % 3 == 2)
             it_ops = {{ops[0], ops[1], ops[2], ops[3], 1}};
@@ -184,7 +187,8 @@ void floatTetWild::optimization(const std::vector<Vector3> &input_vertices, cons
                 mesh.params.eps += mesh.params.eps_delta;
                 mesh.params.eps_2 = mesh.params.eps * mesh.params.eps;
                 cnt_increase_epsilon--;
-                cout << "enlarge envelope, eps = " << mesh.params.eps << endl;
+                if (!mesh.params.is_quiet)
+                    cout << "enlarge envelope, eps = " << mesh.params.eps << endl;
 //                pausee();
             }
         }
@@ -200,7 +204,8 @@ void floatTetWild::optimization(const std::vector<Vector3> &input_vertices, cons
                     mesh.params.eps += mesh.params.eps_delta;
                     mesh.params.eps_2 = mesh.params.eps * mesh.params.eps;
                     cnt_increase_epsilon--;
-                    cout << "enlarge envelope, eps = " << mesh.params.eps << endl;
+                    if (!mesh.params.is_quiet)
+                        cout << "enlarge envelope, eps = " << mesh.params.eps << endl;
 //                    pausee();
 #ifdef NEW_ENVELOPE
                     tree.sf_tree_exact.init(input_vertices, input_faces, mesh.params.eps);
@@ -240,7 +245,8 @@ void floatTetWild::optimization(const std::vector<Vector3> &input_vertices, cons
     }
 
     ////postprocessing
-    cout << "//////////////// postprocessing ////////////////" << endl;
+    if (!mesh.params.is_quiet)
+        cout << "//////////////// postprocessing ////////////////" << endl;
     for (auto &v:mesh.tet_vertices) {
         if (v.is_removed)
             continue;
@@ -271,7 +277,8 @@ void floatTetWild::optimization(const std::vector<Vector3> &input_vertices, cons
 void floatTetWild::cleanup_empty_slots(Mesh &mesh, double percentage) {
     if (mesh.tets.size() < 9e5)
         return;
-    cout<<mesh.tets.size()<<" ==> ";
+    if (!mesh.params.is_quiet)
+        cout<<mesh.tets.size()<<" ==> ";
     ///
     const int v_end_id = mesh.tet_vertices.size() * percentage;
     const int t_end_id = mesh.tets.size() * percentage;
@@ -319,7 +326,8 @@ void floatTetWild::cleanup_empty_slots(Mesh &mesh, double percentage) {
         for (int j = 0; j < 4; j++)
             t[j] = map_v_ids[t[j]];
     }
-    cout<<mesh.tets.size()<<endl;
+    if (!mesh.params.is_quiet)
+        cout<<mesh.tets.size()<<endl;
 }
 
 void floatTetWild::operation(Mesh &mesh, AABBWrapper& tree, const std::array<int, 4> &ops){
@@ -327,78 +335,91 @@ void floatTetWild::operation(Mesh &mesh, AABBWrapper& tree, const std::array<int
     int v_num, t_num;
     double max_energy, avg_energy;
     double time;
+    const bool is_quiet = mesh.params.is_quiet;
 
     for (int i = 0; i < ops[0]; i++) {
         igl_timer.start();
-        cout << "edge splitting..." << endl;
+        if (!is_quiet)
+            cout << "edge splitting..." << endl;
         untangle(mesh);
         edge_splitting(mesh, tree);
         time = igl_timer.getElapsedTime();
-        cout << "edge splitting done!" << endl;
-        cout << "time = " << time << "s" << endl;
         v_num = mesh.get_v_num();
         t_num = mesh.get_t_num();
         get_max_avg_energy(mesh, max_energy, avg_energy);
-        cout << "#v = " << v_num << endl;
-        cout << "#t = " << t_num << endl;
-        cout << "max_energy = " << max_energy << endl;
-        cout << "avg_energy = " << avg_energy << endl;
+        if (!is_quiet) {
+            cout << "edge splitting done!" << endl;
+            cout << "time = " << time << "s" << endl;
+            cout << "#v = " << v_num << endl;
+            cout << "#t = " << t_num << endl;
+            cout << "max_energy = " << max_energy << endl;
+            cout << "avg_energy = " << avg_energy << endl;
+        }
         stats().record(StateInfo::splitting_id, time, v_num, t_num, max_energy, avg_energy);
         output_info(mesh, tree);
     }
 
     for (int i = 0; i < ops[1]; i++) {
         igl_timer.start();
-        cout << "edge collapsing..." << endl;
+        if (!is_quiet)
+            cout << "edge collapsing..." << endl;
         untangle(mesh);
         edge_collapsing(mesh, tree);
         time = igl_timer.getElapsedTime();
-        cout << "edge collapsing done!" << endl;
-        cout << "time = " << time << "s" << endl;
         v_num = mesh.get_v_num();
         t_num = mesh.get_t_num();
         get_max_avg_energy(mesh, max_energy, avg_energy);
-        cout << "#v = " << v_num << endl;
-        cout << "#t = " << t_num << endl;
-        cout << "max_energy = " << max_energy << endl;
-        cout << "avg_energy = " << avg_energy << endl;
+        if (!is_quiet) {
+            cout << "edge collapsing done!" << endl;
+            cout << "time = " << time << "s" << endl;
+            cout << "#v = " << v_num << endl;
+            cout << "#t = " << t_num << endl;
+            cout << "max_energy = " << max_energy << endl;
+            cout << "avg_energy = " << avg_energy << endl;
+        }
         stats().record(StateInfo::collapsing_id, time, v_num, t_num, max_energy, avg_energy);
         output_info(mesh, tree);
     }
 
     for (int i = 0; i < ops[2]; i++) {
         igl_timer.start();
-        cout << "edge swapping..." << endl;
+        if (!is_quiet)
+            cout << "edge swapping..." << endl;
         untangle(mesh);
         edge_swapping(mesh);
         time = igl_timer.getElapsedTime();
-        cout << "edge swapping done!" << endl;
-        cout << "time = " << time << "s" << endl;
         v_num = mesh.get_v_num();
         t_num = mesh.get_t_num();
         get_max_avg_energy(mesh, max_energy, avg_energy);
-        cout << "#v = " << v_num << endl;
-        cout << "#t = " << t_num << endl;
-        cout << "max_energy = " << max_energy << endl;
-        cout << "avg_energy = " << avg_energy << endl;
+        if (!is_quiet) {
+            cout << "edge swapping done!" << endl;
+            cout << "time = " << time << "s" << endl;
+            cout << "#v = " << v_num << endl;
+            cout << "#t = " << t_num << endl;
+            cout << "max_energy = " << max_energy << endl;
+            cout << "avg_energy = " << avg_energy << endl;
+        }
         stats().record(StateInfo::swapping_id, time, v_num, t_num, max_energy, avg_energy);
         output_info(mesh, tree);
     }
 
     for (int i = 0; i < ops[3]; i++) {
         igl_timer.start();
-        cout << "vertex smoothing..." << endl;
+        if (!is_quiet)
+            cout << "vertex smoothing..." << endl;
         vertex_smoothing(mesh, tree);
         time = igl_timer.getElapsedTime();
-        cout << "vertex smoothing done!" << endl;
-        cout << "time = " << time << "s" << endl;
         v_num = mesh.get_v_num();
         t_num = mesh.get_t_num();
         get_max_avg_energy(mesh, max_energy, avg_energy);
-        cout << "#v = " << v_num << endl;
-        cout << "#t = " << t_num << endl;
-        cout << "max_energy = " << max_energy << endl;
-        cout << "avg_energy = " << avg_energy << endl;
+        if (!is_quiet) {
+            cout << "vertex smoothing done!" << endl;
+            cout << "time = " << time << "s" << endl;
+            cout << "#v = " << v_num << endl;
+            cout << "#t = " << t_num << endl;
+            cout << "max_energy = " << max_energy << endl;
+            cout << "avg_energy = " << avg_energy << endl;
+        }
         stats().record(StateInfo::smoothing_id, time, v_num, t_num, max_energy, avg_energy);
         output_info(mesh, tree);
     }
@@ -615,7 +636,8 @@ void floatTetWild::operation(const std::vector<Vector3> &input_vertices, const s
 bool floatTetWild::update_scaling_field(Mesh &mesh, Scalar max_energy) {
 //    return false;
 
-    cout << "updating sclaing field ..." << endl;
+    if (!mesh.params.is_quiet)
+        cout << "updating sclaing field ..." << endl;
     bool is_hit_min_edge_length = false;
 
     Scalar radius0 = mesh.params.ideal_edge_length * 1.8;//increasing the radius would increase the #v in output
@@ -635,7 +657,8 @@ bool floatTetWild::update_scaling_field(Mesh &mesh, Scalar max_energy) {
         filter_energy = 100;
     }
 
-    cout << "filter_energy = " << filter_energy << endl;
+    if (!mesh.params.is_quiet)
+        cout << "filter_energy = " << filter_energy << endl;
     Scalar recover = 1.5;
     std::vector<Scalar> scale_multipliers(mesh.tet_vertices.size(), recover);
     Scalar refine_scale = 0.5;
@@ -731,7 +754,8 @@ bool floatTetWild::update_scaling_field(Mesh &mesh, Scalar max_energy) {
             v.sizing_scalar = new_scale;
     }
 
-    cout << "is_hit_min_edge_length = " << is_hit_min_edge_length << endl;
+    if (!mesh.params.is_quiet)
+        cout << "is_hit_min_edge_length = " << is_hit_min_edge_length << endl;
     return is_hit_min_edge_length;
 }
 
@@ -2005,7 +2029,8 @@ void floatTetWild::untangle(Mesh &mesh) {
 //        }
 //        //fortest
     }
-    cout << "fixed " + std::to_string(cnt) + " tangled element" << endl;
+    if (!mesh.params.is_quiet)
+        cout << "fixed " + std::to_string(cnt) + " tangled element" << endl;
 }
 
 void floatTetWild::smooth_open_boundary(Mesh& mesh, const AABBWrapper& tree) {
@@ -2326,12 +2351,14 @@ void floatTetWild::manifold_edges(Mesh& mesh) {
         if (tet_groups.size() < 2)
             continue;
 
-        cout<<"find non-manifold edge "<<e[0]<<" "<<e[1]<<endl;
-        cout<<tet_groups.size()<<"/"<<n_t_ids.size()<<endl;
-        cout<<e[0]<<" "<<e[1]<<endl;
-        for (int t_id: n_t_ids) {
-            cout<<t_id<<": ";
-            tets[t_id].print();
+        if (!mesh.params.is_quiet) {
+            cout<<"find non-manifold edge "<<e[0]<<" "<<e[1]<<endl;
+            cout<<tet_groups.size()<<"/"<<n_t_ids.size()<<endl;
+            cout<<e[0]<<" "<<e[1]<<endl;
+            for (int t_id: n_t_ids) {
+                cout<<t_id<<": ";
+                tets[t_id].print();
+            }
         }
 //        pausee();
 
@@ -2545,7 +2572,8 @@ void floatTetWild::manifold_vertices(Mesh& mesh){
         }
 
 
-        cout << "find non-manifold vertex " << b_v_id << endl;
+        if (!mesh.params.is_quiet)
+            cout << "find non-manifold vertex " << b_v_id << endl;
 
 //        if(tet_groups.size() == 1){
 //            for (int i = 1; i < tet_groups[0].size(); i++) {
@@ -2701,7 +2729,8 @@ void floatTetWild::manifold_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::Matri
         if (f_group.size() == conn_f4v[v_id].size())
             continue;
         //
-        cout << "HHHHHHHHHHHH" << endl;
+        if (!mesh.params.is_quiet)
+            cout << "HHHHHHHHHHHH" << endl;
         V.conservativeResize(V.rows() + 1, V.cols());
         V.row(V.rows() - 1) = V.row(v_id);
         for (int f_id:f_group) {
@@ -2718,7 +2747,6 @@ void floatTetWild::manifold_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::Matri
     //fortest
     Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic> B;
     igl::is_vertex_manifold(F, B);
-    cout << B.rows() << endl;
     int cnt = 0;
     for (int i = 0; i < B.rows(); i++) {
         if (!B(i, 0)) {
@@ -2726,7 +2754,10 @@ void floatTetWild::manifold_surface(Mesh& mesh, Eigen::MatrixXd& V, Eigen::Matri
 //            cout << "non-manifold " << i << " " << V.row(i) << endl;
         }
     }
-    cout << cnt << endl;
+    if (!mesh.params.is_quiet) {
+        cout << B.rows() << endl;
+        cout << cnt << endl;
+    }
     //fortest
 
 }

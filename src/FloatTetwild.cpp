@@ -164,6 +164,15 @@ int tetrahedralization(GEO::Mesh&       sf_mesh,
     } else {
         boolean_operation(mesh, boolean_op);
     }
+
+    if (params.manifold_surface) {
+        // Mirrors the CLI (main.cpp): manifold_surface() mutates `mesh` so that its boundary is
+        // manifold. The surface matrices it fills are a by-product this entry point does not return.
+        Eigen::MatrixXd V_sf;
+        Eigen::MatrixXi F_sf;
+        manifold_surface(mesh, V_sf, F_sf);
+    }
+
     stats().record(StateInfo::wn_id,
                    timer.getElapsedTimeInSec(),
                    mesh.get_v_num(),

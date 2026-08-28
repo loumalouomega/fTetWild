@@ -153,8 +153,10 @@ void edge_collapsing_aux(Mesh&                            mesh,
             counter++;
         }
 
-        cout << "success(env) = " << suc_counter_env << endl;
-        cout << "success = " << suc_counter << "(" << counter << ")" << endl;
+        if (!mesh.params.is_quiet) {
+            cout << "success(env) = " << suc_counter_env << endl;
+            cout << "success = " << suc_counter << "(" << counter << ")" << endl;
+        }
 
 #if EC_POSTPROCESS
         if (suc_counter == 0)

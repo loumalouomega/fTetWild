@@ -40,6 +40,13 @@ int tetrahedralization(
 
 Returns `EXIT_SUCCESS` (0) on success, `EXIT_FAILURE` (1) if the input is empty or malformed.
 
+**Tet winding**: `TO` uses the standard positive-signed-volume convention — the same one MSH
+tet4, `VTK_TETRA`, and gmsh expect. For a tet `[a, b, c, d]` (row of `TO`, indices into `VO`),
+`(b - a) × (c - a) · (d - a) > 0`. This differs from fTetWild's own *internal* mesh representation
+(`Mesh::tets`), whose winding is the opposite (`Predicates::orient_3d(v0, v1, v2, v3) ==
+ORI_POSITIVE`, a negative signed volume) — `MeshIO::extract_volume_mesh`, which produces `TO`,
+reorders the last two indices of each tet to convert between the two.
+
 ---
 
 ## Minimal Example
