@@ -51,12 +51,6 @@ jobs:
           fetch-depth: 10
           submodules: "recursive"
           
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        timeout-minutes: 20
-        with:
-          detached: true
-    
       - name: Setup NMake (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
